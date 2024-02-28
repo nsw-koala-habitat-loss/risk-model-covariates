@@ -1,0 +1,14 @@
+landuse: 		Land use (NSW Landuse 2007)
+drought: 		Combined Drought Indicator
+prop_size: 		Property size
+prop_value: 	Property value
+dist_sua: 		Distance to nearest SUA
+ecol_cond:  	Ecological condition
+prec: 			Precipitation
+temp: 			Temperature
+slope: 			Slope
+soil_fert: 		Soil fertility
+pop_den: 		Population density
+forest_tenure: 	Forest tenure
+income: 		Household income
+fire_hist: 		Fire

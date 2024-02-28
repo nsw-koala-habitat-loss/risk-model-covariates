@@ -6,3 +6,5 @@ Replicable data processing pipeline that converts input layers into a consistent
 * ArcGIS Pro (Python 3.7 or above)
 * Windows
 
+## Steps
+1. Set Python interpreter path to ArcGIS Python (`C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3`)
