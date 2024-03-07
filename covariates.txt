@@ -1,14 +1,15 @@
-landuse: 		Land use (NSW Landuse 2007)
-drought: 		Combined Drought Indicator
-prop_size: 		Property size
-prop_value: 	Property value
-dist_sua: 		Distance to nearest SUA
-ecol_cond:  	Ecological condition
-prec: 			Precipitation
-temp: 			Temperature
-slope: 			Slope
-soil_fert: 		Soil fertility
-pop_den: 		Population density
-forest_tenure: 	Forest tenure
-income: 		Household income
-fire_hist: 		Fire
+landuse: 	    	Land use (NSW Landuse 2007)         https://datasets.seed.nsw.gov.au/dataset/nsw-landuseac11c
+drought:  	  	Combined Drought Indicator          https://edis.spaceport.intersect.org.au/%2FArchive%2FEDIS_Version1%2FMonthly%20Data%2FGISlayers%2FGISlayers2016_2021.zip
+prop_size: 	  	Property size
+prop_value:   	Property value
+dist_sua: 	  	Distance to nearest SUA             https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs-edition-3/jul2021-jun2026/access-and-downloads/digital-boundary-files/SUA_2021_AUST_GDA2020_SHP.zip
+ecol_cond:    	Ecological condition                https://datasets.seed.nsw.gov.au/dataset/ecological-condition-of-terrestrial-habitat
+prec: 		    	Precipitation                       http://opendap.bom.gov.au:8080/thredds/fileServer/agcd/precip/total/r005/12month
+temp: 		    	Temperature (Mean)                  http://opendap.bom.gov.au:8080/thredds/fileServer/agcd/tmean/mean/r005/12month
+slope: 		    	Slope                               https://ecat.ga.gov.au/geonetwork/srv/eng/catalog.search#/metadata/72759
+soil_fert: 	  	Soil fertility                      NSW DPIE
+pop_den: 	    	Population density                  https://www.abs.gov.au/census/find-census-data/datapacks?release=2016&product=GCP&geography=SA1&header=S
+forest_tenure: 	Forest tenure                       https://www.agriculture.gov.au/sites/default/files/documents/aus_forten18_geotiff.zip
+income:     		Household income                    https://www.abs.gov.au/census/find-census-data/datapacks?release=2016&product=GCP&geography=SA1&header=S
+fire_hist: 	  	Fire                                https://datasets.seed.nsw.gov.au/dataset/fire-history-wildfires-and-prescribed-burns-1e8b6
+remoteness:     Remoteness Structure (ABS)          https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs-edition-3/jul2021-jun2026/access-and-downloads/digital-boundary-files/RA_2021_AUST_GDA94.zip

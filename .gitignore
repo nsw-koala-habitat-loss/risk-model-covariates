@@ -2,3 +2,5 @@ data/
 intermediate_files/
 output/
 *.pyc
+.Rproj.user
+intermediate_data/
