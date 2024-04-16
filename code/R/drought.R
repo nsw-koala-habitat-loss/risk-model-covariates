@@ -63,6 +63,6 @@ cdi_file <- file.path(dirname, "../intermediate_data/cdi.shp")
 source('code/R/spatial_functions.R')
 output <- cdi_file %>%
   projectShp(name = "drought") %>%
-  shpToRast(name = "drought", field_name = "CDI") %>%
-  resampleRast(name = "drought") %>%
-  clipRast(name = "drought", to_output = TRUE)
+  shpToRast(name = "drought", field_name = "CDI", overwrite=T) %>%
+  resampleRast(name = "drought", overwrite=T) %>%
+  clipRast(name = "drought", to_output = TRUE,overwrite=T)

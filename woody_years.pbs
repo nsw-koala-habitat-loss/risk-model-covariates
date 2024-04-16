@@ -1,0 +1,11 @@
+#!/bin/bash -l
+#PBS -N woody_years
+#PBS -l select=1:ncpus=1:mem=128g
+#PBS -l walltime=04:00:00
+#PBS -m ae
+#PBS -J 1-23
+cd $PBS_O_WORKDIR
+ 
+module load r/4.2.1-foss-2022a
+
+Rscript code/R/woody.R $PBS_ARRAY_INDEX

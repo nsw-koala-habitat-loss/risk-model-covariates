@@ -25,6 +25,6 @@ st_write(nsw_fire_cleaned, cleaned_file, append=F)
 
 output <- cleaned_file %>%
   projectShp(name = "fire") %>%
-  shpToRast(name = "fire", field_name = "FireType") %>%
-  resampleRast(name = "fire") %>%
-  clipRast(name = "fire", to_output = TRUE)
+  shpToRast(name = "fire", field_name = "FireType", overwrite=T) %>%
+  resampleRast(name = "fire", overwrite=T) %>%
+  clipRast(name = "fire", to_output = TRUE, overwrite=T)

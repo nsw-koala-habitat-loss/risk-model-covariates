@@ -6,8 +6,7 @@ library(sf)
 library(stringr)
 
 source('code/R/spatial_functions.R')
-
-dirname <- "H://risk-model-covariates/code"
+source('code/R/parameters')
 
 ## Landuse shp
 remoteness <- file.path(dirname, "../data/remoteness/RA_2021_AUST_GDA94/RA_2021_AUST_GDA94.shp")
@@ -22,6 +21,6 @@ st_write(remoteness_classified, remoteness_path, append=F)
 
 output <- remoteness_path %>%
   projectShp(name = "remoteness") %>%
-  shpToRast(name = "remoteness", field_name = "remoteness") %>%
-  resampleRast(name = "remoteness") %>%
-  clipRast(name = "remoteness", to_output = TRUE)
+  shpToRast(name = "remoteness", field_name = "remoteness", overwrite=T) %>%
+  resampleRast(name = "remoteness", overwrite=T) %>%
+  clipRast(name = "remoteness", to_output = TRUE, overwrite=T)

@@ -4,3 +4,4 @@ output/
 *.pyc
 .Rproj.user
 intermediate_data/
+plots/

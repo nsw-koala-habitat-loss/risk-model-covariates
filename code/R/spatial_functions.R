@@ -1,7 +1,7 @@
 
 library(terra)
 
-dirname <- "H://risk-model-covariates/code"
+dirname <- "code"
 ref_raster <- terra::rast(file.path(dirname,  "../data/risk_analysis/clearing_spatial_units_data_prep/woody_veg_loss_prep/veg_loss/agr_loss_1119.tif"))
 nsw = terra::vect(file.path(dirname, '../data/Admin_boundaries/nsw_lga.shp'))
 
@@ -10,6 +10,7 @@ loadShp <- function(name, input_shp) {
 }
 
 projectShp <- function(input_shp, name = NA) {
+  print(paste("Start projecting shapefile", name))
   if (is.na(name)) {
     stop("Name must be specified")
   }
@@ -20,6 +21,7 @@ projectShp <- function(input_shp, name = NA) {
 }
 
 projectRast <- function(input_raster, name = NA, overwrite = F) {
+  print(paste("Start projecting raster", name))
   if (is.na(name)) stop("Name must be specified")
   fname = file.path(dirname, "../intermediate_data", paste0(name, "_proj.tif"))
   
@@ -33,6 +35,7 @@ projectRast <- function(input_raster, name = NA, overwrite = F) {
 }
 
 shpToRast <- function(input_shp, name = NA, field_name = "", to_output = FALSE, overwrite = FALSE) {
+  print(paste("Start converting Shp to Rast for", name))
   if (is.na(name)) stop("Name must be specified")
   if (to_output) {
     fname = file.path(dirname, "../output", paste0(name, ".tif"))
@@ -48,6 +51,7 @@ shpToRast <- function(input_shp, name = NA, field_name = "", to_output = FALSE, 
 }
 
 clipRast <- function(input_raster, name = NA, to_output = TRUE, overwrite = FALSE, apply_mask = TRUE) {
+  print(paste("Start clipping raster", name))
   if (is.na(name)) stop("Name must be specified")
   if (to_output) {
     fname = file.path(dirname, "../output", paste0(name, ".tif"))
@@ -64,6 +68,7 @@ clipRast <- function(input_raster, name = NA, to_output = TRUE, overwrite = FALS
 }
 
 resampleRast <- function(input_raster, name = NA, to_output = FALSE, overwrite = FALSE) {
+  print(paste("Start resampling raster", name))
   if (is.na(name)) stop("Name must be specified")
   if (to_output) {
     fname = file.path(dirname, "../output", paste0(name, ".tif"))

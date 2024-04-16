@@ -1,0 +1,11 @@
+#!/bin/bash -l
+#PBS -N climate_years
+#PBS -l select=1:ncpus=1:mem=128g:cputype=6140
+#PBS -l walltime=02:00:00
+#PBS -m abe
+#PBS -J 0-35
+cd $PBS_O_WORKDIR
+ 
+module load r/4.2.1-foss-2022a
+
+Rscript code/R/climate.R $PBS_ARRAY_INDEX

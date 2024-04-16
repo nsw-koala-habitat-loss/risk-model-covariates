@@ -13,10 +13,10 @@ forest_tenure_dbf <- read.dbf("data/forest_tenure/aus_forten18_geotiff/aus_forte
 forest_tenure_rast <- terra::rast('output/forest_tenure.tif')
 
 output <- forest_tenure_lyr %>%
-  projectRast(name = "forest_tenure", overwrite = F) %>%
-  clipRast(name = "forest_tenure", apply_mask = FALSE, to_output = FALSE, overwrite = F) %>%
-  resampleRast(name = "forest_tenure", overwrite = F) %>%
-  clipRast(name = "forest_tenure", to_output = FALSE, overwrite = F)
+  projectRast(name = "forest_tenure", overwrite = T) %>%
+  clipRast(name = "forest_tenure", apply_mask = FALSE, to_output = FALSE, overwrite = T) %>%
+  resampleRast(name = "forest_tenure", overwrite = T) %>%
+  clipRast(name = "forest_tenure", to_output = FALSE, overwrite = T)
 
 forest_tenure_rast <- rast(output)
 activeCat(forest_tenure_rast) <- 1

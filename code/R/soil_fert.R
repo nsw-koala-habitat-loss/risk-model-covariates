@@ -7,6 +7,6 @@ soil_fert_lyr <- "data/soil_fert/inherentsoilfertility_nsw_v4_5_211020/Fertility
 
 soil_fert_lyr %>%
   projectShp(name = "soil_fert") %>%
-  shpToRast(name = "soil_fert", field_name = "Fert_code") %>%
-  resampleRast(name = "soil_fert") %>%
-  clipRast(name = "soil_fert", to_output = TRUE)
+  shpToRast(name = "soil_fert", field_name = "Fert_code", overwrite=T) %>%
+  resampleRast(name = "soil_fert", overwrite=T) %>%
+  clipRast(name = "soil_fert", to_output = TRUE, overwrite=T)
