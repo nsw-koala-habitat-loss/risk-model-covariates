@@ -15,3 +15,48 @@ output <- nsw_landuse_2013 %>%
   shpToRast(name = "landuse", field_name = "TertiaryAL", overwrite=T) %>%
   resampleRast(name = "landuse", overwrite=T) %>%
   clipRast(name = "landuse", overwrite=T, to_output = TRUE)
+
+
+## Land Use 2017 ####
+# Purpose: To produce land use data for 2017 datasets 
+
+rm(list = ls(all.names = TRUE)) #will clear all objects includes hidden objects.
+gc() #free up memrory and report the memory usage.
+
+# Load Libraries
+library(tidyverse)
+library(tidyterra)
+library(terra)
+library(sf)
+library(stringr)
+library(qs)
+library(exactextractr)
+
+
+# load data
+# load woody raster as template
+Woody <- rast("Input/woody_nsw.tif")
+Woody_template <- rast("Input/Woody_template.tif")
+
+landuse2017 <- vect("Input/land_nswlanduse2017v1p5/NSWLanduse2017_Ver1_5_20230921.shp") %>% 
+  project(crs(Woody))
+
+# Generate a look up table for the landuse codes in NSW
+landuse2017_lut <- as.data.frame(landuse2017) %>%
+  select(SecondaryCode = SecondaryA ,SecondaryDes = Secondary, TertiaryCode = TertiaryAL , TertiaryDes = Tertiary)%>% 
+  distinct() %>% 
+  arrange(landuse2017_lut$TertiaryCode) %>% 
+  mutate(Retain = if_else(SecondaryCode %in% c(110, 120, 130, 510, 520, 530, 540, 550, 560, 570, 580, 590, 610, 620, 630, 640, 650, 660), 0, 1))
+write.csv(landuse2017_lut, "Output/landuse2017_lut.csv")
+
+landuse2017_sf <- st_as_sf(landuse2017) %>% 
+  select(TertiaryCode = TertiaryAL) %>% 
+  mutate(TertiaryCode = as.factor(TertiaryCode))
+
+landuse2017_r <- rasterize(landuse2017, Woody, field = "TertiaryAL")
+names(landuse2017_r) <- "TertiaryCode"
+plot(landuse2017_r)
+
+landuse2017_r <- ifel(not.na(landuse2017_r$TertiaryCode),landuse2017_r$TertiaryCode, Woody_template$EXT)
+names(landuse2017_r) <- "TertiaryCode"
+writeRaster(landuse2017_r, "Output/Raster/landuse2017.tif", overwrite=TRUE)
