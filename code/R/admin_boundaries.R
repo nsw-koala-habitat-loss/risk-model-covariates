@@ -14,3 +14,22 @@ nsw_lga <- st_read(file.path(dirname, '../data/Admin_boundaries/nsw_lga.shp')) %
   st_union()
 
 st_write(nsw_lga, file.path(dirname, '../data/Admin_boundaries/nsw_lga.shp'), append=F)
+
+
+
+### Part 2 ####
+# Purpose: To process create a raster template.
+# In the template, raster cell value with Woody data will be filled with zero(0) and the rest will be filled with NA.
+
+rm(list = ls(all.names = TRUE)) #will clear all objects includes hidden objects.
+gc() #free up memrory and report the memory usage.
+
+# Load Libraries
+library(terra)
+
+# load data
+# load woody raster as template
+Woody <- rast("Input/woody_nsw.tif")
+Woody_template <- ifel(not.na(Woody), 9999, NA)
+names(Woody_template) <- "EXT"
+writeRaster(Woody_template, "Input/Woody_template.tif", overwrite = TRUE)
