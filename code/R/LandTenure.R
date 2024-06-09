@@ -35,12 +35,20 @@ plot(NPWS_Land)
 
 NSWLandTen <- crop(AusLandTen, NSW_vect_Albers, snap = "out", mask = TRUE) %>% 
   project(crs(Woody))
-NSWLandTen_cats <- as.data.frame(cats(NSWLandTen))[,c(1,4)]
-NSWLandTen_L2 <-  categories(NSWLandTen, layer =1 , NSWLandTen_cats, active = 1) %>% 
+
+NSWLandTen_lut <- as.data.frame(cats(NSWLandTen))[,c(4:5)] %>% 
+  distinct()
+write.csv(NSWLandTen_lut, "Output/NSWLandTen_lut.csv")
+
+NSWLandTen_L2 <- catalyze(NSWLandTen) %>% 
+  subset("L2N") %>% 
   resample(y = Woody, thread = TRUE) %>% 
   crop(Woody, snap = "out", mask = TRUE)
-writeRaster(NSWLandTen_L2, "Output/Raster/NSWLandTen.tif", overwrite = TRUE)
 
-NSWLandTen <- rast("Output/Raster/NSWLandTen.tif")
+names(NSWLandTen_L2) <- "LandTen"
 
-plot(NSWLandTen)
+writeRaster(NSWLandTen_L2, "Output/Raster/LandTen.tif", overwrite = TRUE)
+
+LandTen <- rast("Output/Raster/LandTen.tif")
+
+plot(LandTen)
