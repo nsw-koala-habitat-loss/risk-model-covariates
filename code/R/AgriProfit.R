@@ -73,13 +73,20 @@ SA2_Agri_CommVal <- SA2_2011 %>%
   tidyterra::select(SA2_MAIN, Total_agri, SA2_Area_HA) %>% 
   tidyterra::left_join(SA2_Agri_df, by = join_by("SA2_MAIN" == "SA2_MAIN")) %>% 
   tidyterra::mutate(Agri_per_ha = case_when(Total_agri > 0 & sum_AREA_Agri_ha > 0 ~ Total_agri/sum_AREA_Agri_ha , 
-                                            Total_agri > 0 & (is.na(sum_AREA_Agri_ha) | sum_AREA_Agri_ha == 0)  ~ Total_agri / SA2_Area_HA,
-                                            Total_agri <= 0 ~ 0,
-                                            .default = NA)) %>% 
-  tidyterra::filter(!is.na(Agri_per_ha)) %>% 
+                                            Total_agri > 0 & sum_AREA_Agri_ha == 0 ~ NA,
+                                            Total_agri > 0 & is.na(sum_AREA_Agri_ha) ~ NA,
+                                            Total_agri == 0| is.na(Total_agri) ~ 0,
+                                            .default = 999999999999)) %>%  # to capture any other cases (none here)
   project(crs(Woody))
+
+SA2_Agri_CommVal <- SA2_Agri_CommVal %>% 
+  tidyterra::select(SA2_MAIN, Ag_profit = Total_agri, Ag_Area_ha = sum_AREA_Agri_ha , AgProf_ha = Agri_per_ha)
+# SA2_Agri_CommVal_df <- as.data.frame(SA2_Agri_CommVal) %>% 
+#   filter(Total_agri > 0 & (is.na(sum_AREA_Agri_ha) | sum_AREA_Agri_ha == 0))
 
 writeVector(SA2_Agri_CommVal, "Output/Shapefile/SA2_Agri_CommVal.shp", overwrite = TRUE)
 
-SA2_Agri_CommVal_r <- rasterize(SA2_Agri_CommVal, Woody_template, field = "Agri_per_ha", fun = "mean")
-writeRaster(SA2_Agri_CommVal_r, "Output/Raster/AgriVal.tif", overwrite=TRUE)
+SA2_Agri_CommVal <- vect("Output/Shapefile/SA2_Agri_CommVal.shp")
+
+SA2_Agri_CommVal_r <- rasterize(SA2_Agri_CommVal, Woody_template, field = "AgProf_ha", fun = "mean")
+writeRaster(SA2_Agri_CommVal_r, "Output/Raster/AgProf.tif", overwrite=TRUE)
