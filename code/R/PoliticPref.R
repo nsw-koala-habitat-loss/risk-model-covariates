@@ -68,4 +68,5 @@ Ste_LA_rast <- rasterize(Ste_LA_Elec, Woody, field = "PolPar") %>%
   crop(Woody, snap = "out", mask = TRUE)
 names(Ste_LA_rast) <- "PolPref"
 # export
-writeRaster(Ste_LA_rast, "Output/PolPref.tif", overwrite = TRUE)
+writeRaster(Ste_LA_rast, "Output/Raster/PolPref.tif", overwrite = TRUE)
+
