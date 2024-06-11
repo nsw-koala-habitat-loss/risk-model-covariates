@@ -251,6 +251,7 @@ writeRaster(TSoilPC_3sec, "Output/SoilData/TSoilPC_3sec.tif", overwrite = TRUE)
 Woody_3sec <- rast("SoilData/Woody_3sec.tif")
 Woody <- rast("input/woody_cover/woody_nsw.tif")
 TSoilPC <- TSoilPC_3sec %>% resample(Woody, method = "bilinear", threads = TRUE) %>% crop(Woody, snap = "out", mask = TRUE)
+names(TSoilPC) <- c("Soil_PC1", "Soil_PC2", "Soil_PC3")
 writeRaster(TSoilPC, "Output/Raster/TSoilPC.tif", overwrite = TRUE)
 
 # Plotting----
