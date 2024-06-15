@@ -15,6 +15,7 @@ library(tidyterra)
 library(ggokabeito)
 library(viridis)
 library(gg3D)
+library(factoextra)
 theme_set(theme_pubr())
 
 # Raw Data processing (can skip)----
@@ -280,6 +281,16 @@ TSoil_Fert_PC123 <- ggarrange(TSoil_Fert_PC12+rremove("ylab"), TSoil_Fert_PC23+r
                               ncol = 2, nrow = 1, common.legend = TRUE, legend = "top", align = "hv")
 ggsave(TSoil_Fert_PC123, filename = "Output/SoilData/TSoil_Fert_PC123.png", width = 3000, height = 2000, unit = "px")
 ggsave(TSoil_Fert_PCA, filename = "Output/SoilData/TSoil_Fert_PCA.png", width = 3000, height = 2000, unit = "px")
+
+
+
+TSoil_PCA_var <- fviz_eig(PCA_TSoil_3sec, choice = "variance", addlabels = TRUE, ggtheme = theme_pubr())
+TSoil_PCA_eig <- fviz_eig(PCA_TSoil_3sec, choice = "eigenvalue", addlabels = TRUE, ggtheme = theme_pubr())
+TSoil_PCA_var12 <- fviz_pca_var(PCA_TSoil_3sec, axes = c(2, 1), col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE, theme = theme_pubr())
+TSoil_PCA_var23 <- fviz_pca_var(PCA_TSoil_3sec, axes = c(2, 3), col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
+TSoil_PCA_plot <- ggarrange(TSoil_PCA_var, TSoil_PCA_eig, TSoil_PCA_var12, TSoil_PCA_var23, ncol = 2, nrow = 2)
+ggsave("Output/TSoil_PCA_plot.png", TSoil_PCA_plot, width = 4000, height = 4000, dpi = 300, units = "px")
+
 
 
 ### Not using this part onwards ####
