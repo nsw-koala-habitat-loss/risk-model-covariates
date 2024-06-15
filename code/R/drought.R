@@ -70,8 +70,9 @@ output <- cdi_file %>%
 library(terra)
 Drought <- rast("~/Data/NSW_Deforestation/risk-model/input/covariates/drought.tif")
 Woody_template <- rast("D:/Data/NSW_Deforestation/risk-model-covariates/Input/Woody_template.tif")
-plot(Drought, add=TRUE)
-plot(Woody_template, col = "red")
-Drought <- ifel(not.na(Drought$CDI), Drought$CDI, Woody_template$EXT)
+plot(Drought)
+# plot(Woody_template, col = "red")
+Drought <- ifel(not.na(Drought$CDI), Drought$CDI+1, Woody_template$EXT)
 names(Drought) <- "Drought"
-writeRaster(Drought, "output/Raster/Drought.tif")
+writeRaster(Drought, "output/Raster/Drought.tif", overwrite = TRUE)
+
