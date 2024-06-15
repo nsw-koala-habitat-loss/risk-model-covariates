@@ -60,18 +60,18 @@ library(stringr)
 library(qs)
 library(Rcpp)
 library(readxl)
-
+library(foreign)
 
 # load data
 # load woody raster as template
-Woody <- rast("Input/woody_nsw.tif")
-Woody_template <- rast("Input/Woody_template.tif")
+Woody <- rast("D:/Data/NSW_Deforestation/risk-model-covariates/Input/woody_nsw.tif")
+Woody_template <- rast("D:/Data/NSW_Deforestation/risk-model-covariates/Input/Woody_template.tif")
 
-Aus_forten18 <- rast("Input/aus_forten18_geotiff/aus_forten18.tif")
+Aus_forten18 <- rast("D:/Data/NSW_Deforestation/risk-model-covariates/Input/aus_forten18_geotiff/aus_forten18.tif")
 
 # load forest tenure data
-forest_tenure_dbf <- read.dbf("Input/aus_forten18_geotiff/aus_forten18.tif.vat.dbf") %>% 
-  mutate(FOR_CODE = ifelse(STATE == "NSW", FOR_CODE, NA),
+forest_tenure_dbf <- read.dbf("D:/Data/NSW_Deforestation/risk-model-covariates/Input/aus_forten18_geotiff/aus_forten18.tif.vat.dbf") %>% 
+  mutate(FOR_CODE = if_else(STATE == "NSW", FOR_CODE, NA),
          TEN_TYPE = if_else(STATE == "NSW", TEN_TYPE, NA),
          FOR_TEN = if_else(STATE == "NSW", FOR_TEN, NA))
 
@@ -97,29 +97,31 @@ NSW_forten18_xl <- read_xlsx("covariate_description.xlsx", sheet = "NSW_forten18
 forest_tenure_dbf %>% tidyr::drop_na(FOR_CODE) %>% distinct(FOR_TYPE, .keep_all = TRUE) %>% arrange(FOR_TYPE)
 
 
-Aus_forten18_GDALamB <- project(Aus_forten18, crs(Woody), threads=TRUE)
+Aus_forten18_GDALamB <- project(Aus_forten18, crs(Woody), method = "mode", threads=TRUE)
 levels(Aus_forten18_GDALamB) <- NULL
 
-NSW_forten18_ForCode <- classify(Aus_forten18_GDALamB, cbind(forest_tenure_dbf$VALUE, forest_tenure_dbf$FOR_CODE)) %>% 
-  crop(Woody, snap = "out") %>% 
-  resample(Woody, method = "mode", thread = TRUE) %>% 
-  mask(Woody)
-names(NSW_forten18_ForCode) <- "ForCode"
-writeRaster(NSW_forten18_ForCode, "Output/Raster/NSW_forten18_ForCode.tif", overwrite=TRUE)
+# NSW_forten18_ForCode <- classify(Aus_forten18_GDALamB, cbind(forest_tenure_dbf$VALUE, forest_tenure_dbf$FOR_CODE)) %>% 
+#   crop(Woody, snap = "out") %>% 
+#   resample(Woody, method = "mode", thread = TRUE) %>% 
+#   mask(Woody)
+# names(NSW_forten18_ForCode) <- "ForCode"
+# writeRaster(NSW_forten18_ForCode, "Output/Raster/NSW_forten18_ForCode.tif", overwrite=TRUE)
 
 NSW_forten18_ForType <- classify(Aus_forten18_GDALamB, cbind(NSW_forten18_xl$VALUE, NSW_forten18_xl$FOR_TYPE1_Code)) %>% 
-  crop(Woody, snap = "out") %>% 
+  crop(ext(Woody), snap = "out") %>% 
   resample(Woody, method = "mode", thread = TRUE) %>% 
-  mask(Woody)
+  crop(Woody, mask = TRUE, snap = "out")
+
 names(NSW_forten18_ForType) <- "ForType"
+
 NSW_forten18_ForType <- ifel(not.na(NSW_forten18_ForType$ForType), NSW_forten18_ForType$ForType, Woody_template$EXT)
 names(NSW_forten18_ForType) <- "ForType"
 writeRaster(NSW_forten18_ForType, "Output/Raster/NSW_forten18_ForType.tif", overwrite=TRUE)
 
 NSW_forten18_ForTen <- classify(Aus_forten18_GDALamB, cbind(NSW_forten18_xl$VALUE, NSW_forten18_xl$FOR_TEN_CODE)) %>% 
-  crop(Woody, snap = "out") %>% 
+  crop(ext(Woody), snap = "out") %>% 
   resample(Woody, method = "mode", thread = TRUE) %>% 
-  mask(Woody)
+  crop(Woody, mask = TRUE, snap = "out")
 names(NSW_forten18_ForTen) <- "ForTen"
 NSW_forten18_ForTen <- ifel(not.na(NSW_forten18_ForTen$ForTen),NSW_forten18_ForTen$ForTen, Woody_template$EXT)
 names(NSW_forten18_ForTen) <- "ForTen"

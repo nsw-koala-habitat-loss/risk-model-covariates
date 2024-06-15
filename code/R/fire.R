@@ -52,3 +52,4 @@ NSW_Fire <- vect("Output/Shapefile/fire.shp") %>%
 NSW_Fire <- ifel(not.na(NSW_Fire$Fire), NSW_Fire$Fire, Woody_template$EXT)
 names(NSW_Fire) <- "Fire"
 writeRaster(NSW_Fire, "Output/Raster/Fire.tif", overwrite = TRUE)
+plot(NSW_Fire)

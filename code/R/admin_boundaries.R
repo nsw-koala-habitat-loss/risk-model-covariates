@@ -29,7 +29,7 @@ library(terra)
 
 # load data
 # load woody raster as template
-Woody <- rast("Input/woody_nsw.tif")
-Woody_template <- ifel(not.na(Woody), 9999, NA)
+Woody <- rast("D:/Data/NSW_Deforestation/risk-model-covariates/Input/woody_nsw.tif")
+Woody_template <- ifel(not.na(Woody), 0, NA)
 names(Woody_template) <- "EXT"
 writeRaster(Woody_template, "Input/Woody_template.tif", overwrite = TRUE)
