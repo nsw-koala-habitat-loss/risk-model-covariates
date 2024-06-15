@@ -10,11 +10,14 @@ library(tidyterra)
 library(sf)
 library(stringr)
 library(qs)
+library(exactextractr)
 
 # load data
 # load woody raster as template
-Woody <- rast("Input/woody_nsw.tif")
+Woody <- rast("D:/Data/NSW_Deforestation/risk-model-covariates/Input/woody_nsw.tif")
 Woody_template <- rast("Input/Woody_template.tif")
+plot(Woody)
+Lots <- st_read("D:/Data/NSW_Deforestation/risk-model-covariates/Input/LLS_properties/Treated_proper_Export.shp")
 
 # load boundary
 
@@ -48,9 +51,9 @@ naluma_nsw_2017_abel0 <- rast("Input/native_vegetation_regulatory_map_datapack_v
 
 # Version: 20221212----
 ## naluma_nsw_2017_abel0 layer contains 1 map display class
-naluma_nsw_2017_abkl0 <- rast("Input/native_vegetation_regulatory_map_datapack_version4_20221212/naluma_nsw_2017_abkl0_c20221212_u9.tif") 
+naluma_nsw_2017_abkl0 <- rast("D:/Data/NSW_Deforestation/risk-model-covariates/Input/native_vegetation_regulatory_map_datapack_version4_20221212/naluma_nsw_2017_abkl0_c20221212_u9.tif") 
 ### 5 Land excluded from the LLS Act
-naluma_nsw_2017_abel0 <- rast("Input/native_vegetation_regulatory_map_datapack_version4_20221212/naluma_nsw_2017_abel0_c20221212_u9.tif")
+naluma_nsw_2017_abel0 <- rast("D:/Data/NSW_Deforestation/risk-model-covariates/Input/native_vegetation_regulatory_map_datapack_version4_20221212/naluma_nsw_2017_abel0_c20221212_u9.tif")
 
 Woody_NVR <- project(Woody, crs(naluma_nsw_2017_abkl0), thread = TRUE)
 
@@ -69,3 +72,25 @@ names(NatVegReg) <- "NatVegReg"
 writeRaster(NatVegReg, "Output/Raster/NatVegReg.tif", overwrite = TRUE)
 NatVegReg <- rast("Output/Raster/NatVegReg.tif")
 plot(NatVegReg)
+
+# Extract values
+Lots_NVR <- exact_extract(NatVegReg, Lots, fun = "frac", max_cells_in_memory = 3.5e+08)
+Lots_Woody <- exact_extract(Woody, Lots, fun = "sum", max_cells_in_memory = 3.5e+08)
+
+Lots_NVR_sf <- cbind(Lots, Woody = Lots_Woody, Lots_NVR) %>% 
+  mutate(across(c(Woody, starts_with("frac")), \(x) round(x, 1))) %>% 
+  select(cat_label, Woody, frac_1, frac_3, frac_4, frac_6, frac_9999)
+
+Lots_NVR_sf_1 <- cbind(Lots, Woody = Lots_Woody, Lots_NVR) %>% 
+  select(cat_label, Woody, frac_1, frac_3, frac_4, frac_6, frac_9999) %>% 
+  mutate(across(c(Woody, starts_with("frac")), \(x) round(x, 1))) %>% 
+  # filter(cat_label == "no_veg") %>% 
+  st_drop_geometry(Lots_NVR_sf) %>% unique(.)
+
+Lots_NVR_sf_2 <- Lots_NVR_sf %>% 
+  mutate(NVR = case_when(Woody == 0 ~ "no_veg",
+                         Woody > 0 & sum(frac1, frac_9999) == 1 ~ "onlynon"
+                         Woody > 0 & sum(frac_3, frac_4, frac_6) > 0  & sum(frac1, frac_9999) == 0 ~ "onlyreg",
+                         Woody > 0 & sum(frac_3, frac_4, frac_6) == 0 ~ "onlynon",
+                         Woody > 0 & sum(frac_3, frac_4, frac_6) > 0 & frac_1 >0 ~ "mixed"
+  ))
