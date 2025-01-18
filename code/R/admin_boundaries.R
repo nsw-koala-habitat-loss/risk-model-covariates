@@ -27,9 +27,15 @@ gc() #free up memrory and report the memory usage.
 # Load Libraries
 library(terra)
 
+INPUT_DIR <- "D:/Data/NSW_Deforestation/risk-model-covariates/Input"
+
 # load data
 # load woody raster as template
-Woody <- rast("D:/Data/NSW_Deforestation/risk-model-covariates/Input/woody_nsw.tif")
+Woody_NSW <- rast(file.path(INPUT_DIR, "woody_nsw.tif"))
+
+# Create raster template
 Woody_template <- ifel(not.na(Woody), 0, NA)
 names(Woody_template) <- "EXT"
-writeRaster(Woody_template, "Input/Woody_template.tif", overwrite = TRUE)
+writeRaster(Woody_template, file.path(INPUT_DIR,"Woody_template.tif"), overwrite = TRUE)
+
+Woody_template <- rast(file.path(INPUT_DIR,"Woody_template.tif"))

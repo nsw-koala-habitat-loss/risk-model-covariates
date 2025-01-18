@@ -29,45 +29,49 @@ library(ggpubr)
 ## Political preference
 ## Nature Relatedness
 
-# load woody raster as template
-Woody <- rast("Input/woody_nsw.tif")
-Woody_template <- rast("Input/Woody_template.tif")
+# load data
+## Define directories
+INPUT_DIR <- "D:/Data/NSW_Deforestation/risk-model-covariates/Input"
+OUTPUT_DIR <- "D:/Data/NSW_Deforestation/risk-model-covariates/Output"
+## load woody raster as template
+Woody <- rast(file.path(INPUT_DIR, "woody_nsw.tif"))
+Woody_template <- rast(file.path(INPUT_DIR, "Woody_template.tif"))
 
 # load 2016 mesh block to calculate population density
-MB_shp_2016 <- vect("Input/2016_GCP_SA1_for_NSW_short-header/2016 Mesh Block/1270055001_mb_2016_nsw_shape/MB_2016_NSW.shp") %>% 
+MB_shp_2016 <- vect(file.path(INPUT_DIR, "2016_GCP_SA1_for_NSW_short-header/2016 Mesh Block/1270055001_mb_2016_nsw_shape/MB_2016_NSW.shp")) %>% 
   project(crs(Woody)) %>% 
   tidyterra::select(MB_CODE16)
 
 # Part1: Population Density----
 # load 2016 mesh block census data
-MB_census_2016 <- read_csv("Input/2016_GCP_SA1_for_NSW_short-header/2016 Mesh Block/2016 census mesh block counts.csv")
+MB_census_2016 <- read_csv(file.path(INPUT_DIR, "2016_GCP_SA1_for_NSW_short-header/2016 Mesh Block/2016 census mesh block counts.csv"))
 Pop_2016_vect <- MB_shp_2016 %>% 
   tidyterra::left_join(MB_census_2016, by = join_by("MB_CODE16" == "MB_CODE_2016")) %>%
   tidyterra::mutate(PopDen = ifelse(Person==0|AREA_ALBERS_SQKM==0,0, Person/AREA_ALBERS_SQKM)) %>%
   tidyterra::drop_na() %>% 
   tidyterra::select(MB_CODE16 , Person16 = Person , PopDen)
 
-writeVector(Pop_2016_vect, "Output/Shapefile/Pop_2016.shp", overwrite = TRUE)
+writeVector(Pop_2016_vect, file.path(OUTPUT_DIR, "Shapefile/Pop_2016.shp"), overwrite = TRUE)
 
 PopDen_2016 <- rasterize(Pop_2016_vect, Woody, field = "PopDen") %>% 
   crop(Woody, snap = "out", mask = TRUE)
 names(PopDen_2016) <- "PopDen"
-writeRaster(PopDen_2016, "Output/Raster/PopDen16.tif")
+writeRaster(PopDen_2016, file.path(OUTPUT_DIR, "Raster/PopDen16.tif"))
 
 # Part2: Population Growth----
 
-Pop_2016_vect <- vect("Output/Shapefile/Pop_2016.shp")
+Pop_2016_vect <- vect(file.path(OUTPUT_DIR, "Shapefile/Pop_2016.shp"))
 PopNum_2016 <- rasterize(Pop_2016_vect, Woody, field = "Person16") %>% 
   crop(Woody, snap = "out", mask = TRUE)
 
 # load 2011 mesh block to calculate population density
-MB_shp_2011 <- vect("Input/2011_BCP_SA1_for_NSW_short-header/1270055001_mb_2011_nsw_shape/MB_2011_NSW.shp") %>% 
+MB_shp_2011 <- vect(file.path(INPUT_DIR, "2011_BCP_SA1_for_NSW_short-header/1270055001_mb_2011_nsw_shape/MB_2011_NSW.shp")) %>% 
   project(crs(Woody)) %>% 
   tidyterra::filter(MB_CAT11 != "NOUSUALRESIDENCE") %>% 
   tidyterra::select(MB_CODE11)
 
 # load 2011 mesh block census data
-MB_census_2011 <- read_csv("Input/2011_BCP_SA1_for_NSW_short-header/censuscounts_mb_2011_aust.csv")
+MB_census_2011 <- read_csv(file.path(INPUT_DIR, "2011_BCP_SA1_for_NSW_short-header/censuscounts_mb_2011_aust.csv"))
 Pop_2011_vect <- MB_shp_2011 %>% 
   tidyterra::left_join(MB_census_2011, by = join_by("MB_CODE11" == "Mesh_Block_ID")) %>%
   tidyterra::select(MB_CODE11 , Person11 = Persons_Usually_Resident)
@@ -95,65 +99,84 @@ NumericVector Cal_PopGrowth(NumericVector Person11, NumericVector Person16 ) {
 
 PopNum_11_16 <- rast(list(PopNum_2011, PopNum_2016)) 
 
-PopGro_2016 <- lapp(PopNum_11_16, fun = Cal_PopGrowth, filename = "Output/Raster/PopGro16.tif", overwrite = TRUE)
+PopGro_2016 <- lapp(PopNum_11_16, fun = Cal_PopGrowth, filename = file.path(OUTPUT_DIR, "Raster/PopGro16.tif"), overwrite = TRUE)
 
 
 
 # Part3: Socioeconomic data ----
 
-Woody <- rast("Input/woody_nsw.tif")
-Woody_template <- rast("Input/Woody_template.tif")
+# Woody <- rast("Input/woody_nsw.tif")
+# Woody_template <- rast("Input/Woody_template.tif")
 
 # import census data at SA1 level
 ## Employment
-PEmp <- read_csv("Input/2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G43B_NSW_SA1.csv") %>%
+PEmp <- read_csv(file.path(INPUT_DIR, "2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G43B_NSW_SA1.csv")) %>%
   dplyr::select(SA1_7DIGITCODE_2016, P_Tot_Emp_Tot, P_Tot_LF_Tot) %>% 
   dplyr::mutate(PEmp = ifelse(P_Tot_Emp_Tot== 0 | P_Tot_LF_Tot == 0, 0, P_Tot_Emp_Tot / P_Tot_LF_Tot)) %>% select(SA1_7DIGITCODE_2016,PEmp)
 
-PAgFrFhEmp <- bind_cols(read_csv("Input/2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G53A_NSW_SA1.csv"),
-                        read_csv("Input/2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G53B_NSW_SA1.csv") %>% select(-SA1_7DIGITCODE_2016)) %>%
+PAgFrFhEmp <- bind_cols(read_csv(file.path(INPUT_DIR, 
+                                           "2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G53A_NSW_SA1.csv")),
+                        read_csv(file.path(INPUT_DIR, 
+                                           "2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G53B_NSW_SA1.csv")) %>% 
+                          select(-SA1_7DIGITCODE_2016)) %>%
   dplyr::select(SA1_7DIGITCODE_2016, Agri_for_fish_Tot, Tot_Tot, ID_NS_Tot) %>%
-  dplyr::mutate( PAgFrFhEmp = ifelse(Agri_for_fish_Tot==0 | Tot_Tot - ID_NS_Tot == 0, 0, Agri_for_fish_Tot / (Tot_Tot - ID_NS_Tot))) %>% select(PAgFrFhEmp)
+  dplyr::mutate( PAgFrFhEmp = ifelse(Agri_for_fish_Tot==0 | Tot_Tot - ID_NS_Tot == 0, 
+                                     0, Agri_for_fish_Tot / (Tot_Tot - ID_NS_Tot))) %>% 
+  select(PAgFrFhEmp)
 
 ## Income
-HInc <- read_csv("Input/2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G02_NSW_SA1.csv") %>% 
+HInc <- read_csv(file.path(INPUT_DIR, "2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G02_NSW_SA1.csv")) %>% 
   dplyr::select(HInc = Median_tot_hhd_inc_weekly)
 
 ## Education
-PYr12Ed <- read_csv("Input/2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G01_NSW_SA1.csv") %>% 
-  dplyr::select(SA1_7DIGITCODE_2016, High_yr_schl_comp_Yr_12_eq_P, High_yr_schl_comp_Yr_11_eq_P, High_yr_schl_comp_Yr_10_eq_P, High_yr_schl_comp_Yr_9_eq_P, High_yr_schl_comp_Yr_8_belw_P, High_yr_schl_comp_D_n_g_sch_P, Tot_P_P) %>%
-  dplyr::mutate(PYr12Ed = ifelse(High_yr_schl_comp_Yr_12_eq_P ==0  | High_yr_schl_comp_Yr_12_eq_P + High_yr_schl_comp_Yr_11_eq_P + High_yr_schl_comp_Yr_10_eq_P + High_yr_schl_comp_Yr_9_eq_P + High_yr_schl_comp_Yr_8_belw_P + High_yr_schl_comp_D_n_g_sch_P ==0, 0,
-                                                       High_yr_schl_comp_Yr_12_eq_P / (High_yr_schl_comp_Yr_12_eq_P + High_yr_schl_comp_Yr_11_eq_P + High_yr_schl_comp_Yr_10_eq_P + High_yr_schl_comp_Yr_9_eq_P + High_yr_schl_comp_Yr_8_belw_P + High_yr_schl_comp_D_n_g_sch_P))) %>% select(SA1_7DIGITCODE_2016, PYr12Ed) %>% 
+PYr12Ed <- read_csv(file.path(INPUT_DIR, "2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G01_NSW_SA1.csv")) %>% 
+  dplyr::select(SA1_7DIGITCODE_2016, High_yr_schl_comp_Yr_12_eq_P, 
+                High_yr_schl_comp_Yr_11_eq_P, High_yr_schl_comp_Yr_10_eq_P, 
+                High_yr_schl_comp_Yr_9_eq_P, High_yr_schl_comp_Yr_8_belw_P, 
+                High_yr_schl_comp_D_n_g_sch_P, Tot_P_P) %>%
+  dplyr::mutate(PYr12Ed = ifelse(High_yr_schl_comp_Yr_12_eq_P ==0  | High_yr_schl_comp_Yr_12_eq_P + High_yr_schl_comp_Yr_11_eq_P + High_yr_schl_comp_Yr_10_eq_P + High_yr_schl_comp_Yr_9_eq_P + High_yr_schl_comp_Yr_8_belw_P + High_yr_schl_comp_D_n_g_sch_P ==0, 
+                                 0, High_yr_schl_comp_Yr_12_eq_P / (High_yr_schl_comp_Yr_12_eq_P + High_yr_schl_comp_Yr_11_eq_P + High_yr_schl_comp_Yr_10_eq_P + High_yr_schl_comp_Yr_9_eq_P + High_yr_schl_comp_Yr_8_belw_P + High_yr_schl_comp_D_n_g_sch_P))) %>% select(SA1_7DIGITCODE_2016, PYr12Ed) %>% 
   dplyr::select(PYr12Ed)
 
-PBachEd <- read_csv("Input/2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G46B_NSW_SA1.csv") %>% 
-  dplyr::select(SA1_7DIGITCODE_2016, P_PGrad_Deg_Total, P_GradDip_and_GradCert_Total, P_BachDeg_Total, P_Tot_Total, P_Lev_Edu_NS_Total, P_Lev_Edu_IDes_Total) %>%
-  dplyr::mutate(PBachEd = ifelse(P_PGrad_Deg_Total + P_GradDip_and_GradCert_Total + P_BachDeg_Total == 0 | P_Tot_Total - P_Lev_Edu_NS_Total - P_Lev_Edu_IDes_Total == 0, 0,
-    (P_PGrad_Deg_Total + P_GradDip_and_GradCert_Total + P_BachDeg_Total) / (P_Tot_Total - P_Lev_Edu_NS_Total - P_Lev_Edu_IDes_Total))) %>% select(SA1_7DIGITCODE_2016, PBachEd) %>%
+PBachEd <- read_csv(file.path(INPUT_DIR, "2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G46B_NSW_SA1.csv")) %>% 
+  dplyr::select(SA1_7DIGITCODE_2016, P_PGrad_Deg_Total, P_GradDip_and_GradCert_Total, 
+                P_BachDeg_Total, P_Tot_Total, P_Lev_Edu_NS_Total, P_Lev_Edu_IDes_Total) %>%
+  dplyr::mutate(PBachEd = ifelse(P_PGrad_Deg_Total + P_GradDip_and_GradCert_Total + P_BachDeg_Total == 0 | P_Tot_Total - P_Lev_Edu_NS_Total - P_Lev_Edu_IDes_Total == 0,
+                                 0, (P_PGrad_Deg_Total + P_GradDip_and_GradCert_Total + P_BachDeg_Total) / (P_Tot_Total - P_Lev_Edu_NS_Total - P_Lev_Edu_IDes_Total))) %>% select(SA1_7DIGITCODE_2016, PBachEd) %>%
   dplyr::select(PBachEd)
 
 ## Demographics
 
 Demographics <- bind_cols(
-  read_csv("Input/2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G01_NSW_SA1.csv"),
-  read_csv("Input/2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G02_NSW_SA1.csv"),
-  read_csv("Input/2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G25_NSW_SA1.csv"),
-  read_csv("Input/2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G08_NSW_SA1.csv"))%>% 
-  dplyr::select(Birthplace_Australia_P, Birthplace_Elsewhere_P, Lang_spoken_home_Eng_only_P, Lang_spoken_home_Oth_Lang_P, Median_age_persons, 
-                Average_household_size, Median_mortgage_repay_monthly, Median_rent_weekly, Tot_P_P, Tot_P_BP_B_OS, Tot_P_Tot_Resp, Tot_P_BP_NS,
-                CF_ChU15_a_Total_P, CF_no_ChU15_a_Total_P, OPF_ChU15_a_Total_P, OPF_no_ChU15_a_Total_P, Total_P) %>%
-  dplyr::mutate(PBirthAus = ifelse(Birthplace_Australia_P ==0 | Birthplace_Elsewhere_P == 0, 0, Birthplace_Australia_P / (Birthplace_Australia_P + Birthplace_Elsewhere_P)), 
-                PEngLang = ifelse(Lang_spoken_home_Eng_only_P == 0 | Lang_spoken_home_Oth_Lang_P == 0, 0,  Lang_spoken_home_Eng_only_P / (Lang_spoken_home_Eng_only_P + Lang_spoken_home_Oth_Lang_P)), 
+  read_csv(file.path(INPUT_DIR, "2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G01_NSW_SA1.csv")),
+  read_csv(file.path(INPUT_DIR, "2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G02_NSW_SA1.csv")),
+  read_csv(file.path(INPUT_DIR, "2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G25_NSW_SA1.csv")),
+  read_csv(file.path(INPUT_DIR, "2016_GCP_SA1_for_NSW_short-header/2016 Census GCP Statistical Area 1 for NSW/2016Census_G08_NSW_SA1.csv")))%>% 
+  dplyr::select(Birthplace_Australia_P, Birthplace_Elsewhere_P, Lang_spoken_home_Eng_only_P, 
+                Lang_spoken_home_Oth_Lang_P, Median_age_persons, Average_household_size, 
+                Median_mortgage_repay_monthly, Median_rent_weekly, Tot_P_P, Tot_P_BP_B_OS, 
+                Tot_P_Tot_Resp, Tot_P_BP_NS, CF_ChU15_a_Total_P, CF_no_ChU15_a_Total_P, 
+                OPF_ChU15_a_Total_P, OPF_no_ChU15_a_Total_P, Total_P) %>%
+  dplyr::mutate(PBirthAus = ifelse(Birthplace_Australia_P ==0 | Birthplace_Elsewhere_P == 0, 
+                                   0, Birthplace_Australia_P / (Birthplace_Australia_P + Birthplace_Elsewhere_P)), 
+                PEngLang = ifelse(Lang_spoken_home_Eng_only_P == 0 | Lang_spoken_home_Oth_Lang_P == 0, 
+                                  0,  Lang_spoken_home_Eng_only_P / (Lang_spoken_home_Eng_only_P + Lang_spoken_home_Oth_Lang_P)), 
                 Age = Median_age_persons, 
                 HSize = Average_household_size, 
                 MortPay = Median_mortgage_repay_monthly, 
                 Rent = Median_rent_weekly, 
-                PBornOS = ifelse(Tot_P_BP_B_OS == 0| Tot_P_Tot_Resp - Tot_P_BP_NS == 0, 0, Tot_P_BP_B_OS / (Tot_P_Tot_Resp - Tot_P_BP_NS)),
-                PFamCompCU15 = ifelse(CF_ChU15_a_Total_P==0 | Total_P==0, 0, CF_ChU15_a_Total_P / Total_P), 
-                PFamCompCx15 = ifelse(CF_no_ChU15_a_Total_P==0 | Total_P==0, 0, CF_no_ChU15_a_Total_P / Total_P), 
-                PFamCompOU15 = ifelse(OPF_ChU15_a_Total_P==0 | Total_P==0, 0, OPF_ChU15_a_Total_P / Total_P), 
-                PFamCompOx15 = ifelse(OPF_no_ChU15_a_Total_P==0 | Total_P==0, 0, OPF_no_ChU15_a_Total_P / Total_P)) %>%
-  dplyr::select(PBirthAus, PEngLang, Age, HSize, MortPay, Rent, PBornOS, PFamCompCU15, PFamCompCx15, PFamCompOU15, PFamCompOx15)
+                PBornOS = ifelse(Tot_P_BP_B_OS == 0| Tot_P_Tot_Resp - Tot_P_BP_NS == 0, 
+                                 0, Tot_P_BP_B_OS / (Tot_P_Tot_Resp - Tot_P_BP_NS)),
+                PFamCompCU15 = ifelse(CF_ChU15_a_Total_P==0 | Total_P==0, 
+                                      0, CF_ChU15_a_Total_P / Total_P), 
+                PFamCompCx15 = ifelse(CF_no_ChU15_a_Total_P==0 | Total_P==0, 
+                                      0, CF_no_ChU15_a_Total_P / Total_P), 
+                PFamCompOU15 = ifelse(OPF_ChU15_a_Total_P==0 | Total_P==0, 
+                                      0, OPF_ChU15_a_Total_P / Total_P), 
+                PFamCompOx15 = ifelse(OPF_no_ChU15_a_Total_P==0 | Total_P==0, 
+                                      0, OPF_no_ChU15_a_Total_P / Total_P)) %>%
+  dplyr::select(PBirthAus, PEngLang, Age, HSize, MortPay, Rent, PBornOS, 
+                PFamCompCU15, PFamCompCx15, PFamCompOU15, PFamCompOx15)
 
 ScEcData16 <- bind_cols(PEmp, PAgFrFhEmp, HInc, PYr12Ed, PBachEd, Demographics)
 
@@ -168,9 +191,9 @@ ScEcData16 <- ScEcData16 %>% select(-PAgFrFhEmp)
 
 SocioEcon16_PCA <- prcomp(ScEcData16[,2:16], scale = TRUE)
 summary(SocioEcon16_PCA)
-qsave(SocioEcon16_PCA, "Output/SocioEcon16_PCA.qs")
+qsave(SocioEcon16_PCA, file.path(OUTPUT_DIR, "SocioEcon16_PCA/SocioEcon16_PCA.qs"))
 ### First 5 PCs are needed to explain > 80% of the variation in the data.###
-SocioEcon16_PCA <- qread("Output/SocioEcon16_PCA.qs")
+SocioEcon16_PCA <- qread(file.path(OUTPUT_DIR, "SocioEcon16_PCA/SocioEcon16_PCA.qs"))
 
 SocioEcon16_PCA_var <- fviz_eig(SocioEcon16_PCA, choice = "variance", addlabels = TRUE, ggtheme = theme_pubr())
 SocioEcon16_PCA_eig <- fviz_eig(SocioEcon16_PCA, choice = "eigenvalue", addlabels = TRUE, ggtheme = theme_pubr())
@@ -180,20 +203,43 @@ SocioEcon16_PCA_var56 <- fviz_pca_var(SocioEcon16_PCA, axes = c(5, 6), col.var =
 get_pca_ind(SocioEcon16_PCA)
 SocioEcon16_PCA$x[,1:5]
 SocioEcon16_PCA_plot <- ggarrange(SocioEcon16_PCA_var, SocioEcon16_PCA_eig, SocioEcon16_PCA_var12, SocioEcon16_PCA_var34, SocioEcon16_PCA_var56, ncol = 2, nrow = 3)
-ggsave("Output/SocioEcon16_PCA_plot.png", SocioEcon16_PCA_plot, width = 4000, height = 6000, dpi = 300, units = "px")
+ggsave(file.path(OUTPUT_DIR, "Figure/SocioEcon16_PCA_plot.png", SocioEcon16_PCA_plot, width = 4000, height = 6000, dpi = 300, units = "px"))
 
 # Extract PC 
 SocioEcon16_PCval <- cbind(ScEcData16[,1], SocioEcon16_PCA$x)
-qsave(SocioEcon16_PCval, "Output/SocioEcon16_PCval.qs")
+qsave(SocioEcon16_PCval, file.path(OUTPUT_DIR, "SocioEcon16_PCA/SocioEcon16_PCval.qs"))
 
 # Extract loadings of the variables
 SocioEcon16_PCload <- rownames_to_column(data.frame(SocioEcon16_PCA$rotation), "Variable")
 rownames(SocioEcon16_PCload) <- NULL
-qsave(SocioEcon16_PCload, "Output/SocioEcon16_PCload.qs")
+qsave(SocioEcon16_PCload, file.path(OUTPUT_DIR, "SocioEcon16_PCA/SocioEcon16_PCload.qs"))
+
+SocioEcon16_PCload <- qread(file.path(OUTPUT_DIR, "SocioEcon16_PCA/SocioEcon16_PCload.qs"))
+
+SocioEcon16_PCload <- SocioEcon16_PCload %>% 
+  mutate('Variable description' = c("Percentage of Total Employment", 
+                                    "Median Household Income", 
+                                    "Percentage of Population with Year 12 Education", 
+                                    "Percentage of Population with Bachelor Degree", 
+                                    "Percentage of Population Born in Australia", 
+                                    "Percentage of Population Speaking English at Home", 
+                                    "Median Age of Population", 
+                                    "Average Household Size", 
+                                    "Median Mortgage Repayment", 
+                                    "Median Rent", 
+                                    "Percentage of Population Born Overseas", 
+                                    "Percentage of Couple Family with Children under 15", 
+                                    "Percentage of Couple Family with no Children under 15", 
+                                    "Percentage of One Parent Family with Children under 15", 
+                                    "Percentage of One Parent Family with no Children under 15")) %>%
+  mutate(across(where(is.numeric), ~round(., 4))) %>% 
+  select('Variable description', Variable, PC1, PC2, PC3, PC4, PC5)
+SocioEcon16_PCload %>% arrange(PC5)
+write.csv(SocioEcon16_PCload, file.path(OUTPUT_DIR, "SocioEcon16_PCA/SocioEcon16_PCload.csv"), row.names = FALSE)
 
 # Allocated PC values to Statistical area 1 SA1
 
-SA1_shp_2016 <- vect("Input/2016_GCP_SA1_for_NSW_short-header/2016_SA1_shape/SA1_2016_AUST.shp") %>% 
+SA1_shp_2016 <- vect(file.path(INPUT_DIR, "2016_GCP_SA1_for_NSW_short-header/2016_SA1_shape/SA1_2016_AUST.shp")) %>% 
   tidyterra::filter(STATE_NAME == "New South Wales") %>% 
   project(crs(Woody)) %>%
   tidyterra::mutate(SA1_7DIGIT = as.numeric(SA1_7DIGIT)) %>%
@@ -214,4 +260,4 @@ SocioEcon16_PC_rast <- rast(list(
 )) %>% 
   crop(Woody, snap = "out", mask = TRUE)
 
-writeRaster(SocioEcon16_PC_rast, "Output/Raster/SocioEcon16_PC.tif", overwrite = TRUE)
+writeRaster(SocioEcon16_PC_rast, file.path(OUTPUT_DIR, "Raster/SocioEcon16_PC.tif"), overwrite = TRUE)

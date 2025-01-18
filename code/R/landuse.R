@@ -35,10 +35,12 @@ library(exactextractr)
 
 # load data
 # load woody raster as template
-Woody <- rast("D:/Data/NSW_Deforestation/risk-model-covariates/Input/woody_nsw.tif")
-Woody_template <- rast("D:/Data/NSW_Deforestation/risk-model-covariates/Input/Woody_template.tif")
+INPUT_DIR <- "D:/Data/NSW_Deforestation/risk-model-covariates/Input"
+OUTPUT_DIR <- "D:/Data/NSW_Deforestation/risk-model-covariates/Output"
+Woody <- rast(file.path(INPUT_DIR, "woody_nsw.tif"))
+Woody_template <- rast(file.path(INPUT_DIR, "Woody_template.tif"))
 
-landuse2017 <- vect("D:/Data/NSW_Deforestation/risk-model-covariates/Input/land_nswlanduse2017v1p5/NSWLanduse2017_Ver1_5_20230921.shp") %>% 
+landuse2017 <- vect(file.path(INPUT_DIR, "land_nswlanduse2017v1p5/NSWLanduse2017_Ver1_5_20230921.shp")) %>% 
   project(crs(Woody))
 
 landuse2017 <- landuse2017 %>% 
@@ -46,19 +48,22 @@ landuse2017 <- landuse2017 %>%
 
 # Generate a look up table for the landuse codes in NSW
 landuse2017_lut <- as.data.frame(landuse2017) %>%
-  select(SecondaryCode = SecondaryA ,SecondaryDes = Secondary, TertiaryCode = TertiaryAL , TertiaryDes = Tertiary)%>% 
+  select(PrimaryC = PrimaryC , SndaryC = SecondaryA , SndaryDes = Secondary, TertC = TertiaryAL , TertDes = Tertiary)%>% 
   distinct() %>% 
-  arrange(TertiaryCode) %>% 
-  mutate(Retain = if_else(SecondaryCode %in% c(110, 120, 130, 510, 520, 530, 540, 550, 560, 570, 580, 590, 610, 620, 630, 640, 650, 660), 0, 1))
-write.csv(landuse2017_lut, "Output/landuse2017_lut.csv")
+  arrange(TertC) %>% 
+  mutate(Retain = if_else(SndaryC %in% c(110, 120, 130, 510, 520, 530, 540, 550, 560, 570, 580, 590, 610, 620, 630, 640, 650, 660), 0, 1))
+write.csv(landuse2017_lut, file.path(INPUT_DIR, "land_nswlanduse2017v1p5/landuse2017_lut.csv"))
 
 # landuse2017_sf <- st_as_sf(landuse2017) %>% 
 #   select(SecondaryCode = SecondaryA) %>% 
 #   mutate(SecondaryCode = as.factor(SecondaryCode))
 
-landuse2017_r <- terra::rasterize(landuse2017, Woody, field = "PrimaryC")
+landuse2017_r <- terra::rasterize(landuse2017, Woody, field = "PrimaryC") %>% 
+  crop(Woody, snap = "out", mask = TRUE)
 names(landuse2017_r) <- "LandUse"
+landuse2017_r <- as.factor(landuse2017_r)
 plot(landuse2017_r)
 
 names(landuse2017_r) <- "LandUse"
-writeRaster(landuse2017_r, "Output/Raster/LandUse.tif", overwrite=TRUE)
+writeRaster(landuse2017_r, file.path(OUTPUT_DIR , "Raster/LandUse.tif"), overwrite=TRUE)
+landuse2017_r <- rast(file.path(OUTPUT_DIR , "Raster/LandUse.tif"))

@@ -67,12 +67,23 @@ output <- cdi_file %>%
   resampleRast(name = "drought", overwrite=T) %>%
   clipRast(name = "drought", to_output = TRUE,overwrite=T)
 
+
+## Part 2: to reclassify the drought raster to 1 (drought)  and 0 (no drought)
 library(terra)
-Drought <- rast("~/Data/NSW_Deforestation/risk-model/input/covariates/drought.tif")
-Woody_template <- rast("D:/Data/NSW_Deforestation/risk-model-covariates/Input/Woody_template.tif")
+
+INPUT_DIR <- "C:/Users/uqychun7/Documents/Data/NSW_Deforestation/risk-model/input/covariates/"
+INPUT_DIR2 <- "D:/Data/NSW_Deforestation/risk-model-covariates/Input"
+OUTPUT_DIR <- "D:/Data/NSW_Deforestation/risk-model-covariates/Output"
+Drought <- rast(file.path(INPUT_DIR, "drought.tif"))
+Woody_template <- rast(file.path(INPUT_DIR2 , "Woody_template.tif"))
 plot(Drought)
+unique(Drought$Drought)
+Drought <- classify(Drought, cbind(c(0,1,2,5), c(1,1,1,0)))
 # plot(Woody_template, col = "red")
-Drought <- ifel(not.na(Drought$CDI), Drought$CDI+1, Woody_template$EXT)
+
+Drought <- ifel(not.na(Drought$Drought), Drought$Drought, Woody_template$EXT)
+
 names(Drought) <- "Drought"
-writeRaster(Drought, "output/Raster/Drought.tif", overwrite = TRUE)
+
+writeRaster(Drought, file.path(OUTPUT_DIR , "Raster/Drought.tif"), overwrite = TRUE)
 

@@ -1,4 +1,4 @@
-# Purpose: To process socioeconomic data 
+# Purpose: To process socioeconomic data (This script and data generated is not relevant to this project)
 
 rm(list = ls(all.names = TRUE)) #will clear all objects includes hidden objects.
 gc() #free up memrory and report the memory usage.
@@ -60,13 +60,13 @@ HInc <- read_csv("Input/2021_GCP_all_for_NSW_short-header/2021 Census GCP All Ge
 PYr12Ed <- read_csv("Input/2021_GCP_all_for_NSW_short-header/2021 Census GCP All Geographies for NSW/SA1/NSW/2021Census_G01_NSW_SA1.csv") %>% 
   dplyr::select(SA1_CODE_2021, High_yr_schl_comp_Yr_12_eq_P, High_yr_schl_comp_Yr_11_eq_P, High_yr_schl_comp_Yr_10_eq_P, High_yr_schl_comp_Yr_9_eq_P, High_yr_schl_comp_Yr_8_belw_P, High_yr_schl_comp_D_n_g_sch_P, Tot_P_P) %>%
   dplyr::mutate(PYr12Ed = ifelse(High_yr_schl_comp_Yr_12_eq_P ==0  | High_yr_schl_comp_Yr_12_eq_P + High_yr_schl_comp_Yr_11_eq_P + High_yr_schl_comp_Yr_10_eq_P + High_yr_schl_comp_Yr_9_eq_P + High_yr_schl_comp_Yr_8_belw_P + High_yr_schl_comp_D_n_g_sch_P ==0, 0,
-                                                       High_yr_schl_comp_Yr_12_eq_P / (High_yr_schl_comp_Yr_12_eq_P + High_yr_schl_comp_Yr_11_eq_P + High_yr_schl_comp_Yr_10_eq_P + High_yr_schl_comp_Yr_9_eq_P + High_yr_schl_comp_Yr_8_belw_P + High_yr_schl_comp_D_n_g_sch_P))) %>% select(SA1_CODE_2021, PYr12Ed) %>% 
+                                 High_yr_schl_comp_Yr_12_eq_P / (High_yr_schl_comp_Yr_12_eq_P + High_yr_schl_comp_Yr_11_eq_P + High_yr_schl_comp_Yr_10_eq_P + High_yr_schl_comp_Yr_9_eq_P + High_yr_schl_comp_Yr_8_belw_P + High_yr_schl_comp_D_n_g_sch_P))) %>% select(SA1_CODE_2021, PYr12Ed) %>% 
   dplyr::select(PYr12Ed)
 
 PBachEd <- read_csv("Input/2021_GCP_all_for_NSW_short-header/2021 Census GCP All Geographies for NSW/SA1/NSW/2021Census_G49B_NSW_SA1.csv") %>% 
   dplyr::select(SA1_CODE_2021, P_PGrad_Deg_Total, P_GradDip_and_GradCert_Total, P_BachDeg_Total, P_Tot_Total, P_Lev_Edu_NS_Total, P_Lev_Edu_IDes_Total) %>%
   dplyr::mutate(PBachEd = ifelse(P_PGrad_Deg_Total + P_GradDip_and_GradCert_Total + P_BachDeg_Total == 0 | P_Tot_Total - P_Lev_Edu_NS_Total - P_Lev_Edu_IDes_Total == 0, 0,
-    (P_PGrad_Deg_Total + P_GradDip_and_GradCert_Total + P_BachDeg_Total) / (P_Tot_Total - P_Lev_Edu_NS_Total - P_Lev_Edu_IDes_Total))) %>% select(SA1_CODE_2021, PBachEd) %>%
+                                 (P_PGrad_Deg_Total + P_GradDip_and_GradCert_Total + P_BachDeg_Total) / (P_Tot_Total - P_Lev_Edu_NS_Total - P_Lev_Edu_IDes_Total))) %>% select(SA1_CODE_2021, PBachEd) %>%
   dplyr::select(PBachEd)
 
 ## Demographics
@@ -122,7 +122,7 @@ ScEcData_rast <- rast(list(
   rasterize(ScEcData_vect, Woody, fun = "mean", field = "PFamCompCx15"),
   rasterize(ScEcData_vect, Woody, fun = "mean", field = "PFamCompOU15"),
   rasterize(ScEcData_vect, Woody, fun = "mean", field = "PFamCompOx15")
-  ))
+))
 
 
 ggplot()+ geom_spatraster(data = ScEcData_rast$PopDen)

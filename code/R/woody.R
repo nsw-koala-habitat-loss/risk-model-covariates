@@ -31,3 +31,18 @@ for (i in 1:length(rast_files)) {
 extract_woody(r[[job_id]])
 #plan(multisession, gc = TRUE, workers = 8)
 #future_lapply(r, extract_woody, future.seed = TRUE)
+
+
+
+# Load Libraries
+library(terra)
+
+# load data
+## Define directories
+INPUT_DIR <- "D:/Data/NSW_Deforestation/risk-model-covariates/Input"
+OUTPUT_DIR <- "D:/Data/NSW_Deforestation/risk-model-covariates/Output"
+
+Woody <- rast(file.path(INPUT_DIR, "woody_nsw.tif"))
+Woody_template <- ifel(not.na(Woody), 0, NA)
+names(Woody_template) <- "EXT"
+writeRaster(Woody_template, file.path(INPUT_DIR, "Woody_template.tif"), overwrite = TRUE)
