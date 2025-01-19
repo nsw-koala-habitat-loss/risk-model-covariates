@@ -33,7 +33,7 @@ theme_set(theme_pubr())
 ## Define directories
 INPUT_DIR <- "D:/Data/NSW_Deforestation/risk-model-covariates/Input"
 OUTPUT_DIR <- "D:/Data/NSW_Deforestation/risk-model-covariates/Output"
-OUTPUT_FIG_DIR <- "D:/Data/NSW_Deforestation/risk-model-covariates/Output/Figures"
+OUTPUT_FIG_DIR <- "D:/Data/NSW_Deforestation/risk-model-covariates/Figures"
 ## load woody raster as template
 Woody <- rast(file.path(INPUT_DIR, "woody_nsw.tif"))
 Woody_template <- rast(file.path(INPUT_DIR, "Woody_template.tif"))

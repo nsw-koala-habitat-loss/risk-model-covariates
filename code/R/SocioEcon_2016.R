@@ -33,6 +33,8 @@ library(ggpubr)
 ## Define directories
 INPUT_DIR <- "D:/Data/NSW_Deforestation/risk-model-covariates/Input"
 OUTPUT_DIR <- "D:/Data/NSW_Deforestation/risk-model-covariates/Output"
+OUTPUT_FIG_DIR <- "D:/Data/NSW_Deforestation/risk-model-covariates/Figures"
+
 ## load woody raster as template
 Woody <- rast(file.path(INPUT_DIR, "woody_nsw.tif"))
 Woody_template <- rast(file.path(INPUT_DIR, "Woody_template.tif"))
@@ -203,7 +205,7 @@ SocioEcon16_PCA_var56 <- fviz_pca_var(SocioEcon16_PCA, axes = c(5, 6), col.var =
 get_pca_ind(SocioEcon16_PCA)
 SocioEcon16_PCA$x[,1:5]
 SocioEcon16_PCA_plot <- ggarrange(SocioEcon16_PCA_var, SocioEcon16_PCA_eig, SocioEcon16_PCA_var12, SocioEcon16_PCA_var34, SocioEcon16_PCA_var56, ncol = 2, nrow = 3)
-ggsave(file.path(OUTPUT_DIR, "Figure/SocioEcon16_PCA_plot.png", SocioEcon16_PCA_plot, width = 4000, height = 6000, dpi = 300, units = "px"))
+ggsave(file.path(OUTPUT_FIG_DIR, "SocioEcon16_PCA_plot.png", SocioEcon16_PCA_plot, width = 4000, height = 6000, dpi = 300, units = "px"))
 
 # Extract PC 
 SocioEcon16_PCval <- cbind(ScEcData16[,1], SocioEcon16_PCA$x)
