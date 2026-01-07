@@ -27,43 +27,23 @@ EpiPlanZone <- vect(file.path(INPUT_DIR, "NSW_EPI_land_zones/All_EPI_Data_Shapef
   project(crs(Woody)) %>% 
   tidyterra::filter(LGA_NAME != "LORD HOWE ISLAND - UNINCORPORATED AREA")
 
-PlanZone_type_df <- as.data.frame(EpiPlanZone) %>% 
+# Create planning zone code based on SYM_CODE and description
+## Reduced classification to 5 classes
+PlanZone_code <- as.data.frame(EpiPlanZone) %>% 
   distinct(SYM_CODE, .keep_all = TRUE) %>% 
   select(LAY_CLASS, LABEL, SYM_CODE) %>% 
-  arrange(SYM_CODE)
-write.csv(PlanZone_type_df, file.path(INPUT_DIR, "NSW_EPI_land_zones/PlanZone_type.csv") , row.names = FALSE)
-
-# load recode look up
-PlanZone_code <- read_csv(file.path(INPUT_DIR, "NSW_EPI_land_zones/PlanZone_type.csv")) %>% 
-  mutate(PlanZone = as.integer(factor(PzCode , levels = unique(PzCode)))-1)
-
-unique(PlanZone_code[5:6])
-
-# PlanZone_type_code_df <- PlanZone_type_df %>% 
-#   left_join(PlanZone_code, by = c("SYM_CODE" = "Abbreviation")) %>% 
-#   select(LAY_CLASS, LABEL, SYM_CODE, "LandZone1 description", LandZone1, PlanZone2) %>% 
-#   arrange(PlanZone2) %>% 
-#   mutate(PlanZoneC = as.factor(as.numeric(factor(PlanZone2, levels = unique(PlanZone2)))))
-# PlanZone_type_code_df %>% select(PlanZone2, PlanZoneC) %>% distinct()
-# # 
-# PlanZone_ori <- vect("D:/Data/NSW_Deforestation/risk-model-covariates/Input/NSW_EPI_land_zones/All_EPI_Data_Shapefile_GDA94_22122022/EPI_Land_Zoning.shp")%>%
-#   project(crs(Woody)) %>% 
-#   tidyterra::filter(LGA_NAME != "LORD HOWE ISLAND - UNINCORPORATED AREA")
-# 
-# PlanZone_type_df <- as.data.frame(PlanZone_ori) %>% 
-#   distinct(SYM_CODE, .keep_all = TRUE) %>% 
-#   arrange(SYM_CODE)
-# 
-# PZ <- full_join(PlanZone_type_df, PlanZone_code, by = c("SYM_CODE" = "Abbreviation"), keep = TRUE) %>% 
-#   select(LAY_CLASS, LABEL, SYM_CODE, Abbreviation, "LandZone1 description", LandZone1, PlanZone2)
-# 
-# write.csv(PlanZone_type_df, "D:/Data/NSW_Deforestation/risk-model-covariates/Input/NSW_EPI_land_zones/PlanZone_type.csv", row.names = FALSE)
-# 
-# PlanZone_type_df <- PlanZone_ori %>% 
-#   tidyterra::select(LABEL , SYM_CODE) %>%
-#   as.data.frame() %>% 
-#   distinct(SYM_CODE, .keep_all = TRUE)
-# write.csv(PlanZone_type_df, "Output/PlanZone_type.csv", row.names = FALSE)
+  arrange(SYM_CODE) %>% 
+  mutate(PzCode2 = case_when(str_detect(SYM_CODE, "^(A|2\\(a\\)|R1|R2|R3|R4|R5)$") ~ "R",
+                             str_detect(SYM_CODE, "^(AGB|B|B1|B2|B3|B4|B5|B6|B7|B8|C|CA|D|E|E2|ENT|MU|REZ|SP3|SP4|UD|IN1|IN2|IN3|IN4|W3|Yellow)$") ~ "B",
+                             str_detect(SYM_CODE, "^(C1|C2|C3|C4|H|I|ENZ|RE1|RE2|W1|W2)$") ~ "C",
+                             str_detect(SYM_CODE, "^(E1|RAC|RAZ|RU1|RU2|RU3|RU4|RU5|RU6)$") ~ "RU",
+                             .default = "O" ),
+         PzCode_des = case_when(PzCode2 == "R" ~ "Residential",
+                                 PzCode2 == "B" ~ "Business",
+                                 PzCode2 == "C" ~ "Environment",
+                                 PzCode2 == "RU" ~ "Rural",
+                                 PzCode2 == "O" ~ "Others"),
+         PlanZone = as.integer(factor(PzCode , levels = unique(PzCode)))-1)
 
 PlanZone <- EpiPlanZone %>%
   tidyterra::select(LABEL , SYM_CODE, LAY_CLASS) %>%
@@ -87,11 +67,7 @@ plot(Woody_template)
 plot(PlanZone_rast, add=TRUE)
 unique(PlanZone_rast$PlanZone)
 
-# PlanZone_rast <- ifel(not.na(PlanZone_rast$PlanZoneC), PlanZone_rast$PlanZoneC, Woody_template$EXT)
-# plot(PlanZone_rast)
-# names(PlanZone_rast) <- "PlanZone"
-# unique(PlanZone_rast$PlanZone)
-# export
+
 writeRaster(PlanZone_rast, file.path(OUTPUT_DIR, "Raster/PlanZone.tif"), overwrite = TRUE)
 PlanZone_rast <- rast(file.path(OUTPUT_DIR, "Raster/PlanZone.tif"))
 PlanZone <- rast(file.path(OUTPUT_DIR, "Raster/PlanZone.tif"))
