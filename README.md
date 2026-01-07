@@ -14,13 +14,13 @@ Replicable data processing pipeline that converts input layers into a consistent
 |Distance to road|[Distance to city & road](code/R/DistRoadCity.R)|
 |Distance to urban centre|[Distance to city & road](code/R/DistRoadCity.R)|
 |Ecological condition|[EcologicalCondition](code/R/ecol_cond.R)|
-|Elevation|[Slope & elevation](code/R/Slope_Elevation.R)|
+|Elevation|[Slope & elevation](code/R/slope_elev.R)|
 |Population density|[Socio economic:Part 1](code/R/SocioEcon_2016.R)|
 |Population growth|[Socio economic:Part 2](code/R/SocioEcon_2016.R)|
 |Parcel size|*Calculated during model fitting*|
 |Land value|[Property value](code/R/PropVal.R)|
 |Rainfall|[Climate](code/R/climate.R)|
-|Slope|[Slope & elevation](code/R/Slope_Elevation.R)|
+|Slope|[Slope & elevation](code/R/slope_elev.R)|
 |Socio-economic PCA|[Socio economic:Part 3](code/R/SocioEcon_2016.R)|
 |Soil PCA|[Soil PCA](code/R/Soil.R)|
 |Temperature|[Climate](code/R/climate.R)|
