@@ -15,8 +15,8 @@ Replicable data processing pipeline that converts input layers into a consistent
 |Distance to urban centre|[Distance to city & road](code/R/DistRoadCity.R)|
 |Ecological condition|[EcologicalCondition](code/R/ecol_cond.R)|
 |Elevation|[Slope & elevation](code/R/Slope_Elevation.R)|
-|Population density|Socio economic:Part 1(code/R/SocioEcon_2016.R)|
-|Population growth|Socio economic:Part 2(code/R/SocioEcon_2016.R)|
+|Population density|[Socio economic:Part 1](code/R/SocioEcon_2016.R)|
+|Population growth|[Socio economic:Part 2](code/R/SocioEcon_2016.R)|
 |Parcel size|*Calculated during model fitting*|
 |Land value|[Property value](code/R/PropVal.R)|
 |Rainfall|[Climate](code/R/climate.R)|
@@ -24,7 +24,7 @@ Replicable data processing pipeline that converts input layers into a consistent
 |Socio-economic PCA|[Socio economic:Part 3](code/R/SocioEcon_2016.R)|
 |Soil PCA|[Soil PCA](code/R/Soil.R)|
 |Temperature|[Climate](code/R/climate.R)|
-|Drought history|[Drought]()(code/R/drought.R)|
+|Drought history|[Drought](code/R/drought.R)|
 |Fire history|[Fire](code/R/fire.R)|
 |Forest tenure, class, type|[Forest](code/R/forest_tenure.R)|
 |Land tenure|[Land tenure](code/R/LandTenure.R)|
@@ -33,3 +33,4 @@ Replicable data processing pipeline that converts input layers into a consistent
 |Planning zones|[Planning zones](code/R/PlanningZones.R)|
 |Political preference|[Political preference](code/R/PoliticPref.R)|
 
+*Refer to supplementary material for other details on each covariate.*
