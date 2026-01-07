@@ -100,7 +100,8 @@ Lots_NVR_sf_2 <- Lots_NVR_sf %>%
   ))
 
 
-
+# This part is not used for this analysis but kept for record ####
+##########################################################################################################################################
 # Part 2----
 # Purpose: to process the draft native vegetation# Purpose: To process native vegetation regulation data 
 

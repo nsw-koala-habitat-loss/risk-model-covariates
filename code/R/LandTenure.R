@@ -25,36 +25,23 @@ NSW_vect <- vect(file.path(INPUT_DIR, "STE_2021_AUST_SHP_GDA2020/STE_2021_AUST_G
   tidyterra::filter(STE_NAME21 == "New South Wales")
 
 #Load land tenure 
+# Use the NSW specific land tenure data
+st_layers(file.path(INPUT_DIR,"nswlandtenure_dec2024_v2_seed.gdb"))
+NSWTEN <- st_read(file.path(INPUT_DIR,"nswlandtenure_dec2024_v2_seed.gdb"), layer = "NSW_LandTenure_DPI2024_v02")
+unique(NSWTEN$TenureClass)
+NSWTEN_2 <- NSWTEN %>% 
+  mutate(LandTen = case_when(TenureClass == "Private" ~ 1,
+                             TenureClass == "Crownland-Leasehold" ~ 2,
+                             TenureClass == "Crownland-Other" ~ 4,
+                             TenureClass == "Indigenous Owned" ~ 4,
+                             TenureClass == "National Park" ~ 3,
+                             TenureClass == "State Forest" ~ 3,
+                            .default = NA))
 
-AusLandTen <- rast(file.path(INPUT_DIR, "land_tenure_of_australia_2010_11_to_2015_16_20210929/AUSTEN_250m_2015_16_alb/AUSTEN_250m_2015_16/AUSTEN_250m_2015_16_alb.tif"))
-# NPWS_Land <- vect((file.path(INPUT_DIR, "npws_allmanagedland/NPWS_AllManagedLand.shp")
+NSWTEN_vect <- vect(NSWTEN_2)
+NSWTEN_rast <- rasterize(NSWTEN_vect, Woody, field = "LandTen", fun = "min") 
 
-# AusLandTen <- project(AusLandTen, crs(Woody), method = "mode", thread = TRUE)
+plot(NSWTEN_rast)
 
-# NPWS_Land_df <- as.data.frame(NPWS_Land)
-# NPWS_Land_df %>% distinct(IUCN , TENURETYPE)
-# plot(NPWS_Land)
-
-NSWLandTen <- AusLandTen %>% 
-  catalyze() %>% 
-  subset("L2N") %>% 
-  project(crs(Woody), method = "mode", thread = TRUE)%>% 
-  resample(y = Woody, method = "mode", thread = TRUE) %>% 
-  crop(Woody, snap = "out", mask = TRUE)
-
-names(NSWLandTen) <- "LandTen"
-NSWLandTen[NSWLandTen == 0] <- NA
-plot(NSWLandTen)
-
-# NSWLandTen <- ifel(NSWLandTen$LandTen == 0, NSWLandTen$LandTen, Woody_template$EXT)
-
-NSWLandTen <- NSWLandTen %>% classify(cbind(c(10, 21, 22,23), c(1, 2, 3, 4)))
-NSWLandTen <- as.factor(NSWLandTen)
-names(NSWLandTen) <- "LandTen"
-plot(NSWLandTen)
-writeRaster(NSWLandTen, file.path(OUTPUT_DIR, "Raster/LandTen.tif"), overwrite = TRUE)
-
-NSWLandTen <- rast(file.path(OUTPUT_DIR, "Raster/LandTen.tif"))
-
-# plot(NSWLandTen)
+writeRaster(NSWTEN_rast, file.path(OUTPUT_DIR, "Raster/NSW_LandTenure.tif"), overwrite = TRUE)
 
