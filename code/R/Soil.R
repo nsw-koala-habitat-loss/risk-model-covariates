@@ -108,12 +108,15 @@ gc()
 
 # NSW Soil Data from SLGA----
 # Download relevant soil data not available in SEED from SLGA
-# API key name: DellTower-Tern
-# API key prefix: eISugEyuDtEIZCFr
-# API key: ZUlTdWdFeXVEdEVJWkNGci45a0g6NmRUby12JzEwSkhLKSJXSGAmYFUoUWs8UmQyU1ZjOUhLZC03WlwkUnV4eVwxZ31KdHNQMGJgRXIubn1q
 
-# Test download 1 raster layer from SLGA 
-apikey <- paste0('apikey:', "ZUlTdWdFeXVEdEVJWkNGci45a0g6NmRUby12JzEwSkhLKSJXSGAmYFUoUWs8UmQyU1ZjOUhLZC03WlwkUnV4eVwxZ31KdHNQMGJgRXIubn1q")
+# SLGA APIKEY
+# usethis::edit_r_environ()
+TERN_APIkey <- Sys.getenv("TERN_APIkey")
+if (TERN_APIkey == "") {
+  stop("API key not found. Please assign TERN_APIkey or set TERN_APIkey in .Renviron")
+}
+
+apikey <- paste0('apikey:', TERN_APIkey)
 AWC_000_005 <- rast(paste0('/vsicurl/https://',apikey,'@data.tern.org.au/landscapes/slga/NationalMaps/SoilAndLandscapeGrid/AWC/AWC_000_005_EV_N_P_AU_TRN_N_20210614.tif'))
 
 
@@ -236,6 +239,7 @@ PCA_TSoil_3sec <- prcomp(TSoilStack_3sec_df[,3:15], scale = TRUE)
 proc.time() -ptm
 
 qsave(PCA_TSoil_3sec, file.path(OUTPUT_DIR, "SoilData/PCA_TSoil_3sec.qs"))
+
 PCA_TSoil_3sec <- qread(file.path(OUTPUT_DIR, "SoilData/PCA_TSoil_3sec.qs"))
 print(PCA_TSoil_3sec)
 summary(PCA_TSoil_3sec)
@@ -252,6 +256,7 @@ qsave(TSoil_3sec_PCval, file.path(OUTPUT_DIR, "SoilData/TSoil_3sec_PCval.qs"))
 TSoil_3sec_PCload <- rownames_to_column(data.frame(PCA_TSoil_3sec$rotation), "Variable")
 rownames(TSoil_3sec_PCload) <- NULL
 qsave(TSoil_3sec_PCload, file.path(OUTPUT_DIR, "SoilData/TSoil_3sec_PCload.qs"))
+TSoil_3sec_PCload <- qread(file.path(OUTPUT_DIR, "SoilData/TSoil_3sec_PCload.qs"))
 
 #Covert PC1, PC2 & PC3 to raster
 TSoilPC_3sec <- rast(TSoil_3sec_PCval[,c(1,2,5,6,7)], type = "xyz", crs = crs(Woody_3sec)) 
@@ -305,15 +310,40 @@ TSoil_3sec_PCload_Tab <- TSoil_3sec_PCload %>%
                                     "Sand content",
                                     "Fine Sand content"),
          across(where(is.numeric), ~round(.,4))) %>%
-  select('Variable description', Variable, PC1, PC2, PC3)
-TSoil_3sec_PCload_Tab %>% 
+  select('Variable description', Variable, PC1, PC2, PC3) %>%
+  # remove anything after _ in Variable names
+  mutate(Variable = gsub("_.*", "", Variable))
+  
+  TSoil_3sec_PCload_Tab %>% 
   # mutate(PC1 = abs(PC1)) %>% 
   arrange(desc(PC3))
 write.csv(TSoil_3sec_PCload_Tab, file.path(OUTPUT_DIR, "SoilData/TSoil_3sec_PCload_Tab.csv"), row.names = FALSE)
 
-TSoil_PCA_var <- fviz_eig(PCA_TSoil_3sec, choice = "variance", addlabels = TRUE, ggtheme = theme_pubr())
-TSoil_PCA_eig <- fviz_eig(PCA_TSoil_3sec, choice = "eigenvalue", addlabels = TRUE, ggtheme = theme_pubr())
-TSoil_PCA_var12 <- fviz_pca_var(PCA_TSoil_3sec, axes = c(2, 1), col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE, theme = theme_pubr())
-TSoil_PCA_var23 <- fviz_pca_var(PCA_TSoil_3sec, axes = c(2, 3), col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
-TSoil_PCA_plot <- ggarrange(TSoil_PCA_var, TSoil_PCA_eig, TSoil_PCA_var12, TSoil_PCA_var23, ncol = 2, nrow = 2)
-ggsave(file.path(OUTPUT_FIG_DIR, "TSoil_PCA_plot.png"), TSoil_PCA_plot, width = 4000, height = 4000, dpi = 300, units = "px")
+TSoil_PCA_var <- fviz_eig(PCA_TSoil_3sec, choice = "variance", addlabels = TRUE, ggtheme = theme_pubr())+
+    theme(plot.title = element_blank()) + theme(axis.title = element_text(size=14), axis.text = element_text(size=12))
+
+TSoil_PCA_eig <- fviz_eig(PCA_TSoil_3sec, choice = "eigenvalue", addlabels = TRUE, ggtheme = theme_pubr())+
+    theme(plot.title = element_blank()) + theme(axis.title = element_text(size=14), axis.text = element_text(size=12))
+
+rownames(PCA_TSoil_3sec$rotation) <- gsub("_.*", "", rownames(PCA_TSoil_3sec$rotation))
+
+TSoil_PCA_var12 <- fviz_pca_var(PCA_TSoil_3sec, axes = c(1, 2), col.var = "contrib", 
+                                      gradient.cols = hcl.colors(18, palette = "Viridis")[1:15], 
+                                      repel = TRUE, labelsize = 6, theme = theme_pubr()) + 
+  theme(plot.title = element_blank())+ labs(color = "Variable\ncontribution (%)")+
+  theme(legend.position = "top", legend.key.width = unit(2, "cm")) +
+  theme(axis.title = element_text(size=14), axis.text = element_text(size=12), legend.text = element_text(size=12), legend.title = element_text(size=14))
+
+TSoil_PCA_var23 <- fviz_pca_var(PCA_TSoil_3sec, axes = c(2, 3), col.var = "contrib", 
+                                      gradient.cols = hcl.colors(18, palette = "Viridis")[1:15], 
+                                      repel = TRUE, labelsize = 6, theme = theme_pubr()) + 
+  theme(plot.title = element_blank())+ labs(color = "Variable\ncontribution (%)")+
+  theme(legend.position = "top", legend.key.width = unit(2, "cm")) +
+  theme(axis.title = element_text(size=14), axis.text = element_text(size=12), legend.text = element_text(size=12), legend.title = element_text(size=14))
+TSoil_PCA_plot <- (TSoil_PCA_var|TSoil_PCA_eig)/(TSoil_PCA_var12|TSoil_PCA_var23)+
+  plot_annotation(tag_levels = 'A') &
+  theme(plot.tag = element_text(size = 16))
+
+# TSoil_PCA_plot <- ggarrange(TSoil_PCA_var, TSoil_PCA_eig, TSoil_PCA_var12, TSoil_PCA_var23, ncol = 2, nrow = 2)
+
+ggsave(filename = file.path(OUTPUT_FIG_DIR, "TSoil_PCA_plot.png"), plot = TSoil_PCA_plot, width = 4000, height = 4000, dpi = 300, units = "px")

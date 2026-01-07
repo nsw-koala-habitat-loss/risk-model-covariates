@@ -13,6 +13,7 @@ library(qs)
 library(Rcpp)
 library(exactextractr)
 library(factoextra)
+library(patchwork)
 library(ggpubr)
 
 # Socioeconomic covariates ----
@@ -197,15 +198,40 @@ qsave(SocioEcon16_PCA, file.path(OUTPUT_DIR, "SocioEcon16_PCA/SocioEcon16_PCA.qs
 ### First 5 PCs are needed to explain > 80% of the variation in the data.###
 SocioEcon16_PCA <- qread(file.path(OUTPUT_DIR, "SocioEcon16_PCA/SocioEcon16_PCA.qs"))
 
-SocioEcon16_PCA_var <- fviz_eig(SocioEcon16_PCA, choice = "variance", addlabels = TRUE, ggtheme = theme_pubr())
-SocioEcon16_PCA_eig <- fviz_eig(SocioEcon16_PCA, choice = "eigenvalue", addlabels = TRUE, ggtheme = theme_pubr())
-SocioEcon16_PCA_var12 <- fviz_pca_var(SocioEcon16_PCA, axes = c(1, 2), col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE, theme = theme_pubr())
-SocioEcon16_PCA_var34 <- fviz_pca_var(SocioEcon16_PCA, axes = c(3, 4), col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
-SocioEcon16_PCA_var56 <- fviz_pca_var(SocioEcon16_PCA, axes = c(5, 6), col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
-get_pca_ind(SocioEcon16_PCA)
-SocioEcon16_PCA$x[,1:5]
-SocioEcon16_PCA_plot <- ggarrange(SocioEcon16_PCA_var, SocioEcon16_PCA_eig, SocioEcon16_PCA_var12, SocioEcon16_PCA_var34, SocioEcon16_PCA_var56, ncol = 2, nrow = 3)
-ggsave(file.path(OUTPUT_FIG_DIR, "SocioEcon16_PCA_plot.png", SocioEcon16_PCA_plot, width = 4000, height = 6000, dpi = 300, units = "px"))
+SocioEcon16_PCA_var <- fviz_eig(SocioEcon16_PCA, choice = "variance", addlabels = TRUE, ggtheme = theme_pubr()) + 
+  theme(plot.title = element_blank()) + theme(axis.title = element_text(size=14), axis.text = element_text(size=12))
+SocioEcon16_PCA_eig <- fviz_eig(SocioEcon16_PCA, choice = "eigenvalue", addlabels = TRUE, ggtheme = theme_pubr()) + 
+  theme(plot.title = element_blank()) + theme(axis.title = element_text(size=14), axis.text = element_text(size=12))
+
+SocioEcon16_PCA_var12 <- fviz_pca_var(SocioEcon16_PCA, axes = c(1, 2), col.var = "contrib", 
+                                      gradient.cols = hcl.colors(18, palette = "Viridis")[1:15], 
+                                      repel = TRUE, labelsize = 5, theme = theme_pubr()) + 
+  theme(plot.title = element_blank())+ labs(color = "Variable\ncontribution (%)")+
+  theme(legend.position = "top", legend.key.width = unit(2, "cm")) +
+  theme(axis.title = element_text(size=14), axis.text = element_text(size=12), legend.text = element_text(size=12), legend.title = element_text(size=14))
+SocioEcon16_PCA_var34 <- fviz_pca_var(SocioEcon16_PCA, axes = c(3, 4), col.var = "contrib", 
+                                      gradient.cols = hcl.colors(18, palette = "Viridis")[1:15], 
+                                      repel = TRUE, labelsize = 5, theme = theme_pubr()) + 
+  theme(legend.position = "top", legend.key.width = unit(2, "cm")) +
+  theme(plot.title = element_blank())+ labs(color = "Variable\ncontribution (%)")+
+  theme(axis.title = element_text(size=14), axis.text = element_text(size=12), legend.text = element_text(size=12), legend.title = element_text(size=14))
+SocioEcon16_PCA_var56 <- fviz_pca_var(SocioEcon16_PCA, axes = c(5, 6), col.var = "contrib", 
+                                      gradient.cols = hcl.colors(18, palette = "Viridis")[1:15], 
+                                      repel = TRUE, labelsize = 5, theme = theme_pubr()) +
+  theme(legend.position = "top", legend.key.width = unit(2, "cm")) +
+  theme(plot.title = element_blank())+ labs(color = "Variable\ncontribution (%)")+
+  theme(axis.title = element_text(size=14), axis.text = element_text(size=12), legend.text = element_text(size=12), legend.title = element_text(size=14))
+
+SocioEcon16_PCA_plot <-
+  (SocioEcon16_PCA_var | SocioEcon16_PCA_eig) /
+  (SocioEcon16_PCA_var12 | SocioEcon16_PCA_var34) /
+  (SocioEcon16_PCA_var56 | plot_spacer())+
+  plot_layout(heights = c(0.7,1,1))+
+  plot_annotation(tag_levels = 'A') &
+  theme(plot.tag = element_text(size = 16))
+
+# SocioEcon16_PCA_plot <- ggarrange(SocioEcon16_PCA_var, SocioEcon16_PCA_eig, SocioEcon16_PCA_var12, SocioEcon16_PCA_var34, SocioEcon16_PCA_var56, ncol = 2, nrow = 3)
+ggsave(filename = file.path(OUTPUT_FIG_DIR, "SocioEcon16_PCA_plot.png"), plot = SocioEcon16_PCA_plot, width = 4000, height = 5500, dpi = 300, units = "px")
 
 # Extract PC 
 SocioEcon16_PCval <- cbind(ScEcData16[,1], SocioEcon16_PCA$x)
